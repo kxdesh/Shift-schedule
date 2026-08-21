@@ -30,40 +30,62 @@
     align-items: center;
     justify-content: space-between;
     padding: 4px 4px 8px;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-wrap: nowrap;
+    gap: 4px;
   }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .header-left h1 { font-size: 20px; font-weight: 700; }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .header-left h1 {
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .header-left .month-count-select {
+    padding: 3px 6px;
+    border: 1px solid #2a2a35;
+    border-radius: 6px;
+    background: #0f0f12;
+    color: #fff;
+    font-size: 10px;
+    cursor: pointer;
+    height: 26px;
+  }
   .header-right {
     display: flex;
-    gap: 5px;
+    gap: 3px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
   .header-right button {
-    padding: 5px 10px;
+    padding: 4px 8px;
     border: none;
-    border-radius: 7px;
-    font-size: 11px;
+    border-radius: 6px;
+    font-size: 10px;
     font-weight: 600;
     cursor: pointer;
     background: #1a1a24;
     color: #aaa;
     transition: opacity 0.2s;
+    white-space: nowrap;
+    height: 26px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
   }
   .header-right button:hover { opacity: 0.8; }
   .header-right .primary { background: #4361ee; color: #fff; }
   .header-right .success { background: #2ec4b6; color: #fff; }
   .header-right .danger { background: #e63946; color: #fff; }
-  .header-right .month-count-select {
-    padding: 5px 8px;
-    border: 1px solid #2a2a35;
-    border-radius: 7px;
-    background: #0f0f12;
-    color: #fff;
-    font-size: 11px;
-    cursor: pointer;
+  .header-right .compact-icon {
+    font-size: 13px;
+    line-height: 1;
   }
   .months-grid { display: grid; gap: 8px; }
   .month-card {
@@ -345,79 +367,44 @@
 
   /* ===== iPhone / PWA mobile layout ===== */
   @media (max-width: 600px) {
+    .header {
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .header-left h1 {
+      font-size: 16px;
+    }
+    .header-right {
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+    .header-right button {
+      font-size: 9px;
+      padding: 3px 5px;
+      height: 24px;
+    }
+    .header-right .compact-icon {
+      font-size: 11px;
+    }
     html, body {
       width: 100%;
       min-width: 0;
       overflow-x: hidden;
       -webkit-text-size-adjust: 100%;
     }
-
     body {
       padding: 0;
       background: #0f0f12;
     }
-
     .app {
       width: 100%;
       max-width: none;
-      /* Extra top space keeps the header/buttons below the iPhone Dynamic Island / notch. */
       padding: max(34px, calc(env(safe-area-inset-top) + 18px)) 14px calc(env(safe-area-inset-bottom) + 18px);
     }
-
-    .header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      padding: 0 2px 10px;
-      align-items: center;
-      position: relative;
-      z-index: 2;
-    }
-
-    .header-left {
-      min-width: 0;
-      gap: 8px;
-    }
-
-    .header-left h1 {
-      font-size: 27px;
-      white-space: nowrap;
-    }
-
-    .header-left .month-count-select,
-    .header-right .month-count-select {
-      font-size: 15px;
-      padding: 7px 10px;
-      min-height: 40px;
-      border-radius: 12px;
-    }
-
-    .header-right {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 7px;
-      width: 100%;
-    }
-
-    .header-right button {
-      width: 100%;
-      min-height: 44px;
-      padding: 7px 5px;
-      border-radius: 12px;
-      font-size: 15px;
-      white-space: nowrap;
-    }
-
-    .header-right .month-count-select {
-      width: auto;
-    }
-
     .months-grid {
       display: block !important;
       width: 100%;
     }
-
     .month-card {
       width: 100%;
       padding: 12px 8px 10px;
@@ -425,21 +412,17 @@
       background: #13131a;
       overflow: hidden;
     }
-
     .month-card + .month-card {
       margin-top: 12px;
     }
-
     .month-header {
       margin-bottom: 8px;
       padding: 0 2px;
     }
-
     .month-header .month-name {
       font-size: 23px;
       font-weight: 700;
     }
-
     .month-nav-btn {
       width: 42px;
       height: 42px;
@@ -448,17 +431,14 @@
       font-size: 20px;
       padding: 0;
     }
-
     .calendar-grid {
       gap: 3px;
     }
-
     .day-header {
       font-size: 14px;
       padding: 5px 0 7px;
       color: #666;
     }
-
     .day-cell {
       aspect-ratio: auto;
       height: 72px;
@@ -468,16 +448,13 @@
       gap: 4px;
       -webkit-tap-highlight-color: transparent;
     }
-
     .day-cell:active {
       transform: scale(.98);
     }
-
     .day-cell .day-number {
       font-size: 17px;
       line-height: 1;
     }
-
     .shift-badge {
       font-size: 10px;
       padding: 3px 6px;
@@ -485,52 +462,36 @@
       max-width: 88%;
       line-height: 1.1;
     }
-
     .month-stats {
       margin-top: 9px;
       padding-top: 8px;
       gap: 5px;
     }
-
     .month-stat {
       font-size: 12px;
       padding: 5px 8px;
       border-radius: 8px;
     }
-
     .payments-block {
       margin-top: 8px;
       padding: 10px;
       border-radius: 12px;
       gap: 7px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     .pay-item {
       flex: 1 1 120px;
       min-height: 48px;
       padding: 7px 9px;
       border-radius: 10px;
     }
-
     .pay-item .pay-amount {
       font-size: 15px;
     }
-
     .pay-item .pay-label {
       font-size: 10px;
     }
-
-
-    /* Monthly payment summary */
-    .payments-block {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 14px;
-    }
-
     .payments-title {
       grid-column: 1 / -1;
       font-size: 14px;
@@ -538,50 +499,27 @@
       color: #ddd;
       padding: 0 2px 2px;
     }
-
-    .pay-item {
-      min-width: 0;
-      width: 100%;
-      min-height: 62px;
-      padding: 8px 10px;
-      border-radius: 11px;
-      gap: 8px;
-    }
-
-    .pay-item .pay-icon { font-size: 16px; }
-    .pay-item .pay-amount { font-size: 16px; white-space: nowrap; }
-    .pay-item .pay-label { font-size: 10px; }
-
     .pay-total {
       border-left: 0;
       padding-left: 10px;
     }
-
     .payments-empty {
       grid-column: 1 / -1;
       font-size: 11px;
       color: #555;
       padding: 4px 2px;
     }
-
     .legend-bar {
       gap: 8px 12px;
       padding: 10px 2px 4px;
       margin-top: 8px;
     }
-
     .legend-item {
       font-size: 11px;
     }
-
     .legend-dot {
       width: 10px;
       height: 10px;
-    }
-
-    /* Make the app content feel like the generated mobile mockup. */
-    #monthsGrid {
-      min-height: 0;
     }
   }
 
@@ -613,23 +551,19 @@
     <div class="header-left">
       <h1>📅 График</h1>
       <select class="month-count-select" id="monthCountSelect" onchange="changeMonthCount()">
-        <option value="1">1 мес</option>
-        <option value="2" selected>2 мес</option>
-        <option value="3">3 мес</option>
-        <option value="4">4 мес</option>
-        <option value="6">6 мес</option>
-        <option value="12">12 мес</option>
+        <option value="1">1</option>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="12">12</option>
       </select>
     </div>
     <div class="header-right">
-      <button onclick="toggleSelectionMode()" class="success">✏️ Выделить</button>
-      <button onclick="openSettingsPanel()">⚙️ Настройки</button>
-      <button onclick="openPrintModal()">🖨️ Печать</button>
-      <button onclick="exportData()">📥 Экспорт</button>
-      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-      <button onclick="document.getElementById('importFile').click()">📤 Импорт</button>
-      <button onclick="goToday()" class="primary">🗓 Сегодня</button>
-      <button onclick="clearAllData()" class="danger">🗑️</button>
+      <button onclick="toggleSelectionMode()" class="success"><span class="compact-icon">✏️</span> Выд</button>
+      <button onclick="openSettingsPanel()"><span class="compact-icon">⚙️</span> Настр</button>
+      <button onclick="openPrintModal()"><span class="compact-icon">🖨️</span> Печ</button>
+      <button onclick="goToday()" class="primary"><span class="compact-icon">🗓</span> Сег</button>
     </div>
   </div>
   <div class="months-grid" id="monthsGrid"></div>
@@ -688,6 +622,13 @@
     <h3>📋 Шаблоны месяцев</h3>
     <div class="form-row"><input type="text" id="newTplName" placeholder="Название" style="flex:1;"><button class="btn-gen btn-blue btn-sm" onclick="captureTemplate()">Снять</button></div>
     <div id="templateRow" style="display:flex;flex-wrap:wrap;gap:2px;"></div>
+    <h3 style="border-top-color:#3a3a4a;">📁 Данные</h3>
+    <div class="form-row" style="gap:5px;">
+      <button class="btn-gen btn-gray btn-sm" onclick="exportData()" style="flex:1;">📥 Экспорт</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn-gen btn-gray btn-sm" onclick="document.getElementById('importFile').click()" style="flex:1;">📤 Импорт</button>
+      <button class="btn-gen btn-red btn-sm" onclick="clearAllData()" style="flex:1;">🗑️ Сброс</button>
+    </div>
     <div class="form-row" style="margin-top:8px;justify-content:center;"><button class="btn-gen btn-gray" onclick="closeSettingsPanel()" style="padding:6px 20px;">Готово</button></div>
   </div>
 </div>
