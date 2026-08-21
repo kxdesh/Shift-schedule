@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="График">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>График сменности</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f0f12;
+    color: #fff;
+    padding: 0;
+    min-height: 100vh;
+  }
+  .app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 12px 20px;
+    position: relative;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header-left h1 { font-size: 20px; font-weight: 700; }
+  .header-right {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .header-right button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #1a1a24;
+    color: #aaa;
+    transition: opacity 0.2s;
+  }
+  .header-right button:hover { opacity: 0.8; }
+  .header-right .primary { background: #4361ee; color: #fff; }
+  .header-right .success { background: #2ec4b6; color: #fff; }
+  .header-right .danger { background: #e63946; color: #fff; }
+  .header-right .month-count-select {
+    padding: 5px 8px;
+    border: 1px solid #2a2a35;
+    border-radius: 7px;
+    background: #0f0f12;
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .months-grid { display: grid; gap: 8px; }
+  .month-card {
+    background: #13131a;
+    border-radius: 10px;
+    padding: 8px;
+  }
+  .month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .month-header .month-name { font-size: 14px; font-weight: 600; }
+  .month-nav-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    transition: color 0.2s;
+  }
+  .month-nav-btn:hover { color: #fff; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .day-header {
+    text-align: center;
+    font-size: 9px;
+    color: #555;
+    padding: 3px 0;
+    font-weight: 500;
+  }
+  .day-cell {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    min-height: 30px;
+    cursor: pointer;
+    transition: all 0.12s;
+    gap: 1px;
+    border: 2px solid transparent;
+    background: #0f0f12;
+  }
+  .day-cell:hover { background: rgba(255,255,255,0.05); }
+  .day-cell .day-number { font-size: 12px; font-weight: 500; line-height: 1.2; color: #e0e0e0; }
+  .day-cell.today .day-number { font-weight: 700; color: #4361ee; }
+  .day-cell.today { background: rgba(67,97,238,0.15); border-color: rgba(67,97,238,0.3); }
+  .day-cell.other-month { opacity: 0.12; }
+  .day-cell.selected { border-color: #2ec4b6; background: rgba(46,196,182,0.12); }
+  .day-cell.range-start { border-color: #4361ee; background: rgba(67,97,238,0.18); }
+  .shift-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 5px;
+    line-height: 1.3;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .month-stats {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    border-top: 1px solid #1e1e28;
+    padding-top: 4px;
+    margin-top: 4px;
+  }
+  .month-stat {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: #1a1a24;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .month-stat .money      { color: #2ec4b6; font-weight: 700; }
+  .payments-block {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    padding: 8px 10px;
+    background: #0c0c10;
+    border-radius: 8px;
+    border: 1px solid #1e1e28;
+  }
+  .pay-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .pay-item .pay-icon { font-size: 15px; }
+  .pay-item .pay-amount { font-size: 16px; font-weight: 700; }
+  .pay-item .pay-label { font-size: 10px; color: #888; font-weight: 400; }
+  .pay-5   { background: rgba(67, 97, 238, 0.12); }
+  .pay-20  { background: rgba(247, 127, 0, 0.12); }
+  .pay-24  { background: rgba(168, 85, 247, 0.12); }
+  .pay-5   .pay-amount   { color: #4361ee; }
+  .pay-20  .pay-amount   { color: #f77f00; }
+  .pay-24  .pay-amount   { color: #a855f7; }
+  .pay-total .pay-amount { color: #2ec4b6; }
+  .pay-total {
+    background: rgba(46, 196, 182, 0.08);
+    border-left: 1px solid #1e1e28;
+    padding-left: 14px;
+  }
+  .legend-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 4px 2px 2px;
+    border-top: 1px solid #1e1e28;
+    margin-top: 4px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 3px; font-size: 9px; color: #999; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 3px; }
+  .selection-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 1000px;
+    width: calc(100% - 24px);
+    background: #1a1a24;
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: none;
+    gap: 5px;
+    flex-wrap: wrap;
+    align-items: center;
+    z-index: 99;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    border: 1px solid #2a2a35;
+  }
+  .selection-bar.open { display: flex; }
+  .selection-bar .sel-info { font-size: 10px; color: #aaa; flex: 1; min-width: 60px; }
+  .selection-bar select { padding: 4px 7px; border: 1px solid #2a2a35; border-radius: 5px; background: #0f0f12; color: #fff; font-size: 10px; }
+  .btn-gen {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-gen:active { opacity: 0.7; }
+  .btn-teal { background: #2ec4b6; color: #fff; }
+  .btn-blue { background: #4361ee; color: #fff; }
+  .btn-red { background: #e63946; color: #fff; }
+  .btn-purple { background: #a855f7; color: #fff; }
+  .btn-gray { background: #2a2a35; color: #aaa; }
+  .btn-sm { padding: 4px 8px; font-size: 9px; }
+  .settings-panel {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .settings-panel.open { display: flex; }
+  .settings-content {
+    background: #1a1a24;
+    border-radius: 18px;
+    padding: 24px;
+    max-width: 500px;
+    width: 92%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .settings-content h2 { font-size: 17px; font-weight: 600; margin-bottom: 14px; }
+  .salary-section {
+    background: #0c0c10;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 10px;
+    border: 1px solid #2a2a35;
+  }
+  .salary-section h4 { font-size: 15px; font-weight: 600; color: #2ec4b6; margin-bottom: 14px; }
+  .salary-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+  .salary-table td { padding: 2px 4px; vertical-align: middle; }
+  .salary-table .type-label { font-size: 13px; font-weight: 600; color: #ddd; width: 22%; padding-right: 8px; white-space: nowrap; }
+  .salary-table .input-col { width: 39%; }
+  .salary-table .col-header { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 4px; font-weight: 500; }
+  .salary-table input[type="number"] {
+    width: 100%; min-width: 80px; padding: 10px 14px;
+    border: 1px solid #2a2a35; border-radius: 8px; background: #0f0f12;
+    color: #fff; font-size: 16px; font-weight: 700; text-align: right;
+    -moz-appearance: textfield; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .salary-table input[type="number"]:focus { outline: none; border-color: #2ec4b6; box-shadow: 0 0 0 2px rgba(46,196,182,0.15); }
+  .salary-table input[type="number"]::-webkit-inner-spin-button,
+  .salary-table input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .salary-table .bonus-input { border-color: #3a2a55; }
+  .salary-table .bonus-input:focus { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,0.2); }
+  .salary-table .nopay-label { color: #666 !important; font-style: italic; }
+  .salary-table .nopay-input { opacity: 0.4; pointer-events: none; }
+  .salary-divider { border: none; border-top: 1px solid #2a2a35; margin: 12px 0; }
+  .salary-info { font-size: 10px; color: #888; margin-top: 10px; line-height: 1.5; }
+  .salary-info strong { color: #ccc; }
+  .settings-content h3 { font-size: 12px; font-weight: 600; color: #aaa; margin: 12px 0 6px; padding-top: 10px; border-top: 1px solid #2a2a35; }
+  .settings-content .form-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; margin-bottom: 5px; }
+  .settings-content select, .settings-content input { padding: 6px 8px; border: 1px solid #2a2a35; border-radius: 7px; background: #0f0f12; color: #fff; font-size: 11px; }
+  .settings-content input[type="number"] { width: 50px; text-align: center; }
+  .settings-content input[type="text"] { flex: 1; min-width: 50px; }
+  .settings-content input[type="color"] { width: 26px; height: 26px; padding: 1px; border: 1px solid #2a2a35; border-radius: 5px; cursor: pointer; background: transparent; }
+  .pattern-chip { padding: 2px 7px; border-radius: 7px; background: #1a1a24; font-size: 9px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer; margin: 1px 2px 1px 0; }
+  .pattern-chip:hover { background: #2a2a35; }
+  .pattern-chip button { background: none; border: none; color: #e63946; cursor: pointer; font-size: 9px; padding: 0; }
+  .tpl-chip { padding: 2px 7px; border-radius: 7px; background: #1a1a24; font-size: 9px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer; }
+  .tpl-chip:hover { background: #2a2a35; }
+  .tpl-chip button { background: none; border: none; color: #e63946; cursor: pointer; font-size: 9px; padding: 0; }
+  .type-badge { display: inline-flex; align-items: center; gap: 2px; padding: 2px 5px; border-radius: 5px; font-size: 9px; font-weight: 600; }
+  .cycle-preview { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 3px; }
+  .cycle-step { padding: 2px 5px; border-radius: 3px; font-size: 8px; font-weight: 600; }
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+    display: none; align-items: flex-end; justify-content: center; z-index: 300;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #1a1a24; border-radius: 16px 16px 0 0;
+    padding: 16px 14px 24px; width: 100%; max-width: 400px; max-height: 70vh; overflow-y: auto;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 28px; height: 3px; background: #333; border-radius: 3px; margin: -4px auto 10px; }
+  .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; text-align: center; }
+  .modal .form-group { margin-bottom: 10px; }
+  .modal label { display: block; font-size: 9px; font-weight: 500; color: #888; margin-bottom: 3px; text-transform: uppercase; }
+  .modal select, .modal input { width: 100%; padding: 8px 10px; border: 1px solid #2a2a35; border-radius: 8px; font-size: 12px; background: #0f0f12; color: #fff; appearance: none; }
+  .modal-actions { display: flex; gap: 6px; margin-top: 14px; }
+  .modal-actions button { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .modal-actions .save { background: #4361ee; color: #fff; }
+  .modal-actions .cancel { background: #2a2a35; color: #aaa; }
+  .print-modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; z-index: 400;
+  }
+  .print-modal.open { display: flex; }
+  .print-modal-content {
+    background: #1a1a24; border-radius: 14px;
+    padding: 18px; max-width: 350px; width: 90%;
+  }
+  .print-modal-content h3 { margin-bottom: 12px; }
+  .print-modal-content label { display: block; font-size: 10px; color: #888; margin-bottom: 2px; }
+  .print-modal-content input, .print-modal-content select { width: 100%; padding: 7px 8px; border: 1px solid #2a2a35; border-radius: 7px; background: #0f0f12; color: #fff; font-size: 12px; margin-bottom: 8px; }
+  .print-modal-actions { display: flex; gap: 5px; margin-top: 5px; }
+  .print-modal-actions button { flex: 1; padding: 8px; border: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .print-modal-actions .print-btn { background: #4361ee; color: #fff; }
+  .print-modal-actions .cancel-btn { background: #2a2a35; color: #aaa; }
+  @media print {
+    body { background: #fff !important; color: #000 !important; font-size: 8px; }
+    .app { max-width: 100%; padding: 3px; }
+    .header-right, .legend-bar, .selection-bar, .settings-panel,
+    .month-nav-btn, .month-count-select { display: none !important; }
+    .months-grid { gap: 4px !important; }
+    .month-card { background: #fff !important; border: 1px solid #000 !important; border-radius: 3px; padding: 2px; page-break-inside: avoid; }
+    .month-header .month-name { color: #000 !important; font-size: 9px; font-weight: 700; text-align: center; }
+    .day-header { font-size: 6px; color: #000 !important; padding: 1px 0; font-weight: 600; }
+    .day-cell { min-height: 18px; padding: 1px; }
+    .day-cell .day-number { font-size: 7px; color: #000 !important; font-weight: 600; }
+    .shift-badge { font-size: 6px; padding: 0 2px; }
+    .month-stat { font-size: 6px; padding: 1px 3px; }
+    .month-stat .money { color: #000 !important; }
+    .payments-block { padding: 2px 4px; }
+    .pay-item { padding: 1px 4px; }
+    .pay-item .pay-amount { color: #000 !important; font-size: 9px; }
+    .pay-item .pay-label { font-size: 6px; color: #555 !important; }
+    .header .header-left h1 { font-size: 14px; color: #000 !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1>📅 График</h1>
+      <select class="month-count-select" id="monthCountSelect" onchange="changeMonthCount()">
+        <option value="1">1 мес</option>
+        <option value="2" selected>2 мес</option>
+        <option value="3">3 мес</option>
+        <option value="4">4 мес</option>
+        <option value="6">6 мес</option>
+        <option value="12">12 мес</option>
+      </select>
+    </div>
+    <div class="header-right">
+      <button onclick="toggleSelectionMode()" class="success">✏️ Выделить</button>
+      <button onclick="openSettingsPanel()">⚙️ Настройки</button>
+      <button onclick="openPrintModal()">🖨️ Печать</button>
+      <button onclick="exportData()">📥 Экспорт</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button onclick="document.getElementById('importFile').click()">📤 Импорт</button>
+      <button onclick="goToday()" class="primary">🗓 Сегодня</button>
+      <button onclick="clearAllData()" class="danger">🗑️</button>
+    </div>
+  </div>
+  <div class="months-grid" id="monthsGrid"></div>
+  <div class="legend-bar" id="legendBar"></div>
+</div>
+<div class="selection-bar" id="selectionBar">
+  <div class="sel-info" id="selectionInfo">Выберите первую дату</div>
+  <div class="sel-actions" style="display:flex;gap:3px;flex-wrap:wrap;align-items:center;">
+    <select id="selType" style="padding:4px 7px;border:1px solid #2a2a35;border-radius:5px;background:#0f0f12;color:#fff;font-size:10px;">
+      <option value="">— Очистить —</option>
+    </select>
+    <button class="btn-gen btn-teal btn-sm" onclick="applyTypeToSelected()">✅</button>
+    <select id="selPattern" style="padding:4px 7px;border:1px solid #2a2a35;border-radius:5px;background:#0f0f12;color:#fff;font-size:10px;">
+      <option value="">— Шаблон —</option>
+    </select>
+    <button class="btn-gen btn-orange btn-sm" onclick="applyPatternToSelected()">🔄</button>
+    <button class="btn-gen btn-red btn-sm" onclick="clearSelected()">✕</button>
+    <button class="btn-gen btn-gray btn-sm" onclick="toggleSelectionMode()">Готово</button>
+  </div>
+</div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>⚙️ Настройки</h2>
+      <button onclick="closeSettingsPanel()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div class="salary-section">
+      <h4>💰 Ставки и премия за смену</h4>
+      <table class="salary-table">
+        <thead>
+          <tr><td></td><td class="col-header input-col">Ставка</td><td class="col-header input-col">🎯 Премия</td></tr>
+        </thead>
+        <tbody id="salaryTableBody"></tbody>
+      </table>
+      <div style="font-size:9px;color:#555;margin-top:4px;">🏖️ Отпуск и 🤒 Больничный — не оплачиваются</div>
+      <hr class="salary-divider">
+      <div class="salary-info">
+        <strong>📅 График выплат:</strong><br>
+        📊 <strong>20-е</strong> — аванс за <strong>1–15</strong> тек. месяца (без переработок)<br>
+        📊 <strong>5-е</strong> — зп за <strong>16–конец</strong> пред. месяца + переработки за весь пред. месяц<br>
+        🎯 <strong>24-е</strong> — премия за все смены (включая переработки)<br>
+        <span style="color:#555;">Если дата на выходной → переносится на предыдущий будний</span>
+      </div>
+    </div>
+    <h3>🔄 Шаблоны чередования</h3>
+    <div class="form-row"><input type="text" id="newPatternName" placeholder="Название" style="flex:1;"></div>
+    <div class="form-row"><input type="text" id="customSequence" placeholder="ДДВВННВВ" style="flex:1;font-family:monospace;letter-spacing:1px;"><button class="btn-gen btn-purple btn-sm" onclick="saveSequencePattern()">💾</button></div>
+    <div class="form-row"><span style="font-size:10px;color:#aaa;">Числами:</span><input type="number" id="patternWork" value="3" min="1" max="30" style="width:40px;"><span style="font-size:9px;color:#aaa;">раб</span><input type="number" id="patternOff" value="3" min="1" max="30" style="width:40px;"><span style="font-size:9px;color:#aaa;">отд</span></div>
+    <div class="form-row"><select id="patternWorkType" style="flex:1;"></select><select id="patternOffType" style="flex:1;"><option value="">— Пусто —</option></select><button class="btn-gen btn-purple btn-sm" onclick="saveNumericPattern()">💾</button></div>
+    <div id="patternList" style="display:flex;flex-wrap:wrap;gap:2px;margin-top:4px;"></div>
+    <div class="cycle-preview" id="patternPreview"></div>
+    <h3>🏷️ Типы смен</h3>
+    <div class="form-row"><input type="text" id="newTypeName" placeholder="Название" style="flex:1;"><input type="text" id="newTypeLabel" placeholder="М" style="width:28px;text-align:center;" maxlength="2"><input type="color" id="newTypeColor" value="#8b5cf6" style="width:26px;height:26px;padding:1px;"><button class="btn-gen btn-purple btn-sm" onclick="addCustomType()">+</button></div>
+    <div class="form-row"><label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#aaa;cursor:pointer;"><input type="checkbox" id="newTypeOvertime" style="width:auto;"> 🔄 Считать переработкой (5-е/20-е считаются как переработка)</label></div>
+    <div id="customTypeList" style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:4px;"></div>
+    <h3>📋 Шаблоны месяцев</h3>
+    <div class="form-row"><input type="text" id="newTplName" placeholder="Название" style="flex:1;"><button class="btn-gen btn-blue btn-sm" onclick="captureTemplate()">Снять</button></div>
+    <div id="templateRow" style="display:flex;flex-wrap:wrap;gap:2px;"></div>
+    <div class="form-row" style="margin-top:8px;justify-content:center;"><button class="btn-gen btn-gray" onclick="closeSettingsPanel()" style="padding:6px 20px;">Готово</button></div>
+  </div>
+</div>
+<div class="print-modal" id="printModal">
+  <div class="print-modal-content">
+    <h3>🖨️ Печать</h3>
+    <label>Заголовок</label><input type="text" id="printTitle" value="График сменности">
+    <label>С какого месяца</label><select id="printStartMonth"></select>
+    <label>Кол-во месяцев</label><input type="number" id="printCount" value="4" min="2" max="24">
+    <div class="print-modal-actions"><button class="cancel-btn" onclick="closePrintModal()">Отмена</button><button class="print-btn" onclick="doPrint()">🖨️ Печать</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modalTitle">Смена</h3>
+    <div class="form-group"><label>Дата</label><input type="date" id="modalDate"></div>
+    <div class="form-group"><label>Тип</label><select id="modalType"></select></div>
+    <div class="modal-actions"><button class="cancel" onclick="closeModal()">Отмена</button><button class="save" onclick="saveModal()">Сохранить</button></div>
+  </div>
+</div>
+<script>
+const BUILTIN_TYPES = {
+  day:      { label: 'Д',  name: 'День',        color: '#ff4d6d', textColor: '#fff', paid: true },
+  night:    { label: 'Н',  name: 'Ночь',        color: '#1d3557', textColor: '#a8dadc', paid: true },
+  overtime: { label: 'РВ', name: 'Переработка', color: '#f77f00', textColor: '#fff', paid: true },
+  vacation: { label: 'О',  name: 'Отпуск',      color: '#a855f7', textColor: '#fff', paid: false },
+  sick:     { label: 'Б',  name: 'Больничный',  color: '#64748b', textColor: '#fff', paid: false }
+};
+const DEFAULT_BONUSES = { day: 300, night: 500, overtime: 300, other: 200 };
+let state = {
+  shifts: {}, customTypes: {}, templates: [], patterns: [],
+  monthCount: 2,
+  salary: { day: 2000, night: 2500, overtime: 2000, other: 2000 },
+  bonuses: { ...DEFAULT_BONUSES }
+};
+let baseYear, baseMonth, modalContext = { date: null }, nextCustomId = 1,
+    selectionMode = false, selectedDates = [], rangeStart = null;
+function loadState() {
+  try {
+    const raw = localStorage.getItem('shiftSchedule_v30');
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p.shifts) state.shifts = p.shifts;
+      if (p.customTypes) state.customTypes = p.customTypes;
+      if (p.templates) state.templates = p.templates;
+      if (p.patterns) state.patterns = p.patterns;
+      if (p.monthCount !== undefined) state.monthCount = p.monthCount;
+      if (p.salary) state.salary = { ...state.salary, ...p.salary };
+      if (p.bonuses) state.bonuses = { ...DEFAULT_BONUSES, ...p.bonuses };
+    }
+  } catch(e) { console.warn(e); }
+}
+function saveState() { localStorage.setItem('shiftSchedule_v30', JSON.stringify(state)); }
+loadState();
+const now = new Date();
+baseYear = now.getFullYear();
+baseMonth = now.getMonth();
+function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+function dateStr(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function isToday(y, m, d) { const n = new Date(); return n.getFullYear()===y && n.getMonth()===m && n.getDate()===d; }
+function getDayOfWeek(y, m, d) { return new Date(y, m, d).getDay(); }
+function getPayDate(y, m, d) {
+  let dow = getDayOfWeek(y, m, d);
+  while (dow === 0 || dow === 6) { d--; if (d < 1) { m--; if (m < 0) { m = 11; y--; } d = daysInMonth(y, m); } dow = getDayOfWeek(y, m, d); }
+  return { y, m, d };
+}
+function getAllTypes() {
+  const t = { ...BUILTIN_TYPES };
+  Object.values(state.customTypes).forEach(ct => { t[ct.id] = { label: ct.label, name: ct.name, color: ct.color, textColor: ct.textColor, paid: true, isOvertime: !!ct.isOvertime }; });
+  return t;
+}
+function isLightColor(hex) { const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16); return (r*299 + g*587 + b*114)/1000 > 155; }
+function isTypePaid(id) { const t = getAllTypes(); return t[id] && t[id].paid !== undefined ? t[id].paid : true; }
+function isOvertimeType(id) {
+  if (id === 'overtime') return true;
+  const ct = state.customTypes[id];
+  return !!(ct && ct.isOvertime);
+}
+function getMonthsData() { const d = []; for (let i = 0; i < state.monthCount; i++) { const m = (baseMonth + i) % 12; const y = baseYear + Math.floor((baseMonth + i) / 12); d.push({ y, m, idx: i }); } return d; }
+function getSalaryForType(id) {
+  if (!isTypePaid(id)) return 0;
+  const ct = state.customTypes[id];
+  if (ct) return ct.salary ?? state.salary.other ?? state.salary.day;
+  const s = state.salary;
+  if (id === 'day') return s.day;
+  if (id === 'night') return s.night;
+  if (id === 'overtime') return s.overtime;
+  return s.other || s.day;
+}
+function getBonusForType(id) {
+  if (!isTypePaid(id)) return 0;
+  const ct = state.customTypes[id];
+  if (ct) return ct.bonus ?? state.bonuses.other ?? 0;
+  const b = state.bonuses;
+  if (id === 'day') return b.day || 0;
+  if (id === 'night') return b.night || 0;
+  if (id === 'overtime') return b.overtime || 0;
+  return b.other || 0;
+}
+function saveSalarySettings() {
+  state.salary.day = parseInt(document.getElementById('salaryDay').value) || 2000;
+  state.salary.night = parseInt(document.getElementById('salaryNight').value) || 2500;
+  state.salary.overtime = parseInt(document.getElementById('salaryOvertime').value) || 2000;
+  state.salary.other = parseInt(document.getElementById('salaryOther').value) || 2000;
+  state.bonuses.day = parseInt(document.getElementById('bonusDay').value) || 0;
+  state.bonuses.night = parseInt(document.getElementById('bonusNight').value) || 0;
+  state.bonuses.overtime = parseInt(document.getElementById('bonusOvertime').value) || 0;
+  state.bonuses.other = parseInt(document.getElementById('bonusOther').value) || 0;
+  Object.keys(state.customTypes).forEach(id => {
+    const sEl = document.getElementById(`ct_sal_${id}`);
+    const bEl = document.getElementById(`ct_bon_${id}`);
+    if (sEl) state.customTypes[id].salary = parseInt(sEl.value) || 0;
+    if (bEl) state.customTypes[id].bonus = parseInt(bEl.value) || 0;
+  });
+  saveState();
+}
+function renderSalaryRows() {
+  const tbody = document.getElementById('salaryTableBody');
+  const rows = [];
+  rows.push(`<tr><td class="type-label">💼 День</td><td class="input-col"><input type="number" id="salaryDay" min="0" step="500"></td><td class="input-col"><input type="number" id="bonusDay" min="0" step="100" class="bonus-input"></td></tr>`);
+  rows.push(`<tr><td class="type-label">🌙 Ночь</td><td class="input-col"><input type="number" id="salaryNight" min="0" step="500"></td><td class="input-col"><input type="number" id="bonusNight" min="0" step="100" class="bonus-input"></td></tr>`);
+  rows.push(`<tr><td class="type-label">🔄 Переработка</td><td class="input-col"><input type="number" id="salaryOvertime" min="0" step="500"></td><td class="input-col"><input type="number" id="bonusOvertime" min="0" step="100" class="bonus-input"></td></tr>`);
+  Object.values(state.customTypes).forEach(ct => {
+    const sal = ct.salary ?? state.salary.other ?? state.salary.day;
+    const bon = ct.bonus ?? state.bonuses.other ?? 0;
+    rows.push(`<tr><td class="type-label">${ct.name}${ct.isOvertime ? ' 🔄' : ''}</td>
+      <td class="input-col"><input type="number" id="ct_sal_${ct.id}" value="${sal}" min="0" step="500"></td>
+      <td class="input-col"><input type="number" id="ct_bon_${ct.id}" value="${bon}" min="0" step="100" class="bonus-input"></td></tr>`);
+  });
+  rows.push(`<tr><td class="type-label">📦 Другие</td><td class="input-col"><input type="number" id="salaryOther" min="0" step="500"></td><td class="input-col"><input type="number" id="bonusOther" min="0" step="100" class="bonus-input"></td></tr>`);
+  rows.push(`<tr><td class="type-label nopay-label">🏖️ Отпуск</td><td class="input-col"><input type="number" id="salaryVacation" value="0" class="nopay-input" disabled></td><td class="input-col"><input type="number" id="bonusVacation" value="0" class="nopay-input" disabled></td></tr>`);
+  rows.push(`<tr><td class="type-label nopay-label">🤒 Больничный</td><td class="input-col"><input type="number" id="salarySick" value="0" class="nopay-input" disabled></td><td class="input-col"><input type="number" id="bonusSick" value="0" class="nopay-input" disabled></td></tr>`);
+  tbody.innerHTML = rows.join('');
+}
+function render() {
+  const allTypes = getAllTypes();
+  document.getElementById('monthCountSelect').value = state.monthCount;
+  renderSalaryRows();
+  document.getElementById('salaryDay').value = state.salary.day;
+  document.getElementById('salaryNight').value = state.salary.night;
+  document.getElementById('salaryOvertime').value = state.salary.overtime;
+  document.getElementById('salaryOther').value = state.salary.other || state.salary.day;
+  document.getElementById('bonusDay').value = state.bonuses.day || 0;
+  document.getElementById('bonusNight').value = state.bonuses.night || 0;
+  document.getElementById('bonusOvertime').value = state.bonuses.overtime || 0;
+  document.getElementById('bonusOther').value = state.bonuses.other || 0;
+  const monthsData = getMonthsData();
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const cols = state.monthCount <= 3 ? state.monthCount : (state.monthCount <= 6 ? 3 : 4);
+  document.getElementById('monthsGrid').style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  let gridHtml = '';
+  monthsData.forEach(({ y, m, idx }) => {
+    gridHtml += `<div class="month-card">
+      <div class="month-header"><button class="month-nav-btn" onclick="changeMonth(-1)">◀</button><span class="month-name">${monthNames[m]} ${y}</span><button class="month-nav-btn" onclick="changeMonth(1)">▶</button></div>
+      <div class="calendar-grid day-headers"><div class="day-header">Пн</div><div class="day-header">Вт</div><div class="day-header">Ср</div><div class="day-header">Чт</div><div class="day-header">Пт</div><div class="day-header">Сб</div><div class="day-header">Вс</div></div>
+      <div id="calendarBody${idx}"></div><div class="month-stats" id="monthStats${idx}"></div><div class="payments-block" id="paymentsBlock${idx}"></div></div>`;
+  });
+  document.getElementById('monthsGrid').innerHTML = gridHtml;
+  monthsData.forEach(({ y, m, idx }) => {
+    renderMonthCalendar(y, m, idx, allTypes);
+    renderMonthStats(y, m, idx, allTypes);
+    renderPaymentsBlock(y, m, idx);
+  });
+  let legHtml = '';
+  Object.entries(allTypes).forEach(([id, t]) => { legHtml += `<div class="legend-item"><div class="legend-dot" style="background:${t.color}"></div>${t.name}</div>`; });
+  legHtml += '<div class="legend-item"><div class="legend-dot" style="background:#2a2a35;border:1px solid #555;"></div>Выходной</div>';
+  document.getElementById('legendBar').innerHTML = legHtml;
+  renderPatterns(); renderCustomTypes(); renderTemplates(); updateCycleForm(); updateSelectionBar(); updatePrintModal();
+}
+function renderMonthCalendar(y, m, idx, allTypes) {
+  const days = daysInMonth(y, m);
+  const fd = new Date(y, m, 1).getDay();
+  const so = fd === 0 ? 6 : fd - 1;
+  let h = '<div class="calendar-grid">';
+  for (let i = 0; i < so; i++) h += '<div class="day-cell empty"><div class="day-number"></div></div>';
+  for (let d = 1; d <= days; d++) {
+    const key = dateStr(y, m, d);
+    const val = state.shifts[key] || '';
+    const today = isToday(y, m, d);
+    const sel = selectedDates.includes(key);
+    const rs = rangeStart === key;
+    let c = '', bd = '';
+    if (val) { const td = allTypes[val]; if (td) bd = `<div class="shift-badge" style="background:${td.color};color:${td.textColor}">${td.label}</div>`; }
+    if (today) c += ' today';
+    if (sel) c += ' selected';
+    if (rs) c += ' range-start';
+    const oc = selectionMode ? `toggleDateSelection('${key}')` : `openModal('${key}')`;
+    h += `<div class="day-cell${c}" onclick="${oc}"><div class="day-number">${d}</div>${bd}</div>`;
+  }
+  const rem = (so + days) % 7;
+  if (rem > 0) for (let i = 0; i < 7 - rem; i++) h += '<div class="day-cell empty other-month"><div class="day-number">' + (i+1) + '</div></div>';
+  h += '</div>';
+  document.getElementById('calendarBody' + idx).innerHTML = h;
+}
+function renderMonthStats(y, m, idx, allTypes) {
+  const days = daysInMonth(y, m);
+  const cnt = {}; Object.keys(allTypes).forEach(id => cnt[id] = 0);
+  let tf = 0, tp = 0, tm = 0;
+  for (let d = 1; d <= days; d++) {
+    const val = state.shifts[dateStr(y, m, d)];
+    if (val && cnt[val] !== undefined) { cnt[val]++; tf++; tm += getSalaryForType(val); if (isTypePaid(val)) tp++; }
+  }
+  const empty = days - tf;
+  const fmt = (n) => (n || 0).toLocaleString('ru-RU');
+  let h = `<div class="month-stat">📅${days}</div><div class="month-stat">${tp} раб</div>`;
+  if (tf - tp > 0) h += `<div class="month-stat">🏖${tf - tp}</div>`;
+  if (empty > 0) h += `<div class="month-stat">◇${empty}</div>`;
+  if (tm > 0) h += `<div class="month-stat">💰<span class="money">${fmt(tm)}₽</span></div>`;
+  Object.entries(allTypes).forEach(([id, t]) => { if (cnt[id] > 0) h += `<div class="month-stat"><span style="color:${t.color}">●</span>${t.name}:${cnt[id]}</div>`; });
+  document.getElementById('monthStats' + idx).innerHTML = h;
+}
+function renderPaymentsBlock(y, m, idx) {
+  const fmt = (n) => (n || 0).toLocaleString('ru-RU');
+  const ms = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const prevM = m === 0 ? 11 : m - 1;
+  const prevY = m === 0 ? y - 1 : y;
+  const daysPrev = daysInMonth(prevY, prevM);
+  const daysCur = daysInMonth(y, m);
+  let pay5 = 0;
+  for (let d = 16; d <= daysPrev; d++) {
+    const val = state.shifts[dateStr(prevY, prevM, d)];
+    if (val && !isOvertimeType(val)) pay5 += getSalaryForType(val);
+  }
+  for (let d = 1; d <= daysPrev; d++) {
+    const val = state.shifts[dateStr(prevY, prevM, d)];
+    if (val && isOvertimeType(val)) pay5 += getSalaryForType(val);
+  }
+  const pay5Date = getPayDate(y, m, 5);
+  let pay20 = 0;
+  for (let d = 1; d <= 15 && d <= daysCur; d++) {
+    const val = state.shifts[dateStr(y, m, d)];
+    if (val && !isOvertimeType(val)) pay20 += getSalaryForType(val);
+  }
+  const pay20Date = getPayDate(y, m, 20);
+  let totalBonus = 0;
+  for (let d = 1; d <= daysPrev; d++) {
+    const val = state.shifts[dateStr(prevY, prevM, d)];
+    if (val && isTypePaid(val)) totalBonus += getBonusForType(val);
+  }
+  const pay24Date = getPayDate(y, m, 24);
+  let html = '';
+  if (pay5 > 0) html += `<div class="pay-item pay-5"><span class="pay-icon">📊</span><div><div class="pay-amount">${fmt(pay5)}₽</div><div class="pay-label">5-е(${pay5Date.d} ${ms[pay5Date.m]})</div></div></div>`;
+  if (pay20 > 0) html += `<div class="pay-item pay-20"><span class="pay-icon">📊</span><div><div class="pay-amount">${fmt(pay20)}₽</div><div class="pay-label">20-е(${pay20Date.d} ${ms[pay20Date.m]})</div></div></div>`;
+  if (totalBonus > 0) html += `<div class="pay-item pay-24"><span class="pay-icon">🎯</span><div><div class="pay-amount">${fmt(totalBonus)}₽</div><div class="pay-label">24-е(${pay24Date.d} ${ms[pay24Date.m]})</div></div></div>`;
+  if (pay5 > 0 || pay20 > 0 || totalBonus > 0) {
+    const total = pay5 + pay20 + totalBonus;
+    html += `<div class="pay-item pay-total"><span class="pay-icon">💰</span><div><div class="pay-amount">${fmt(total)}₽</div><div class="pay-label">всего</div></div></div>`;
+  }
+  document.getElementById(`paymentsBlock${idx}`).innerHTML = html || '<span style="font-size:9px;color:#555;">Нет выплат</span>';
+}
+function renderCustomTypes() {
+  const c = document.getElementById('customTypeList');
+  const ids = Object.keys(state.customTypes);
+  if (!ids.length) { c.innerHTML = '<span style="font-size:9px;color:#555;">Нет доп. типов</span>'; return; }
+  c.innerHTML = ids.map(id => {
+    const ct = state.customTypes[id];
+    return `<span class="type-badge" style="background:${ct.color};color:${ct.textColor}">${ct.label}${ct.isOvertime ? ' 🔄' : ''}<button onclick="removeCustomType('${id}')" style="background:none;border:none;cursor:pointer;color:${ct.textColor};opacity:0.6;padding:0;font-size:9px;">✕</button></span>`;
+  }).join('');
+}
+function renderTemplates() {
+  const c = document.getElementById('templateRow');
+  if (!state.templates.length) { c.innerHTML = '<span style="font-size:9px;color:#555;">Нет</span>'; return; }
+  c.innerHTML = state.templates.map((t, i) => `<span class="tpl-chip" onclick="applyTemplateById(${i})">📋 ${t.name}<button onclick="event.stopPropagation();removeTemplate(${i})">✕</button></span>`).join('');
+}
+function renderPatterns() {
+  const c = document.getElementById('patternList');
+  if (!state.patterns.length) { c.innerHTML = '<span style="font-size:9px;color:#555;">Нет шаблонов</span>'; return; }
+  c.innerHTML = state.patterns.map((p, i) => {
+    const label = p.sequence ? `📝 ${p.name} [${p.sequence}]` : `🔄 ${p.name} (${p.work}/${p.off})`;
+    return `<span class="pattern-chip" onclick="applyPatternById(${i})">${label}<button onclick="event.stopPropagation();removePattern(${i})">✕</button></span>`;
+  }).join('');
+  const sel = document.getElementById('selPattern');
+  sel.innerHTML = '<option value="">— Шаблон —</option>';
+  state.patterns.forEach((p, i) => {
+    const label = p.sequence ? `${p.name} [${p.sequence}]` : `${p.name} (${p.work}/${p.off})`;
+    sel.innerHTML += `<option value="${i}">${label}</option>`;
+  });
+}
+function changeMonthCount() { state.monthCount = parseInt(document.getElementById('monthCountSelect').value); saveState(); render(); }
+function openSettingsPanel() { renderSalaryRows(); render(); document.getElementById('settingsPanel').classList.add('open'); }
+function closeSettingsPanel() { saveSalarySettings(); document.getElementById('settingsPanel').classList.remove('open'); render(); }
+function toggleSelectionMode() { selectionMode = !selectionMode; if (!selectionMode) { selectedDates = []; rangeStart = null; } document.getElementById('selectionBar').classList.toggle('open', selectionMode); updateSelectionBar(); render(); }
+function toggleDateSelection(dateKey) {
+  if (!rangeStart) { rangeStart = dateKey; selectedDates = [dateKey]; }
+  else {
+    const s = new Date(rangeStart+'T00:00:00'), e = new Date(dateKey+'T00:00:00');
+    selectedDates = [];
+    const dir = s <= e ? 1 : -1;
+    const cur = new Date(s);
+    while (dir > 0 ? cur <= e : cur >= e) { selectedDates.push(dateStr(cur.getFullYear(),cur.getMonth(),cur.getDate())); cur.setDate(cur.getDate()+dir); }
+    rangeStart = null;
+  }
+  updateSelectionBar(); render();
+}
+function updateSelectionBar() {
+  const info = document.getElementById('selectionInfo');
+  if (!selectionMode) { info.textContent = 'Режим выкл'; return; }
+  if (rangeStart) info.textContent = `Начало: ${rangeStart}`;
+  else if (selectedDates.length > 0) info.textContent = `Выделено: ${selectedDates.length} дн.`;
+  else info.textContent = 'Выберите первую дату';
+  const sel = document.getElementById('selType');
+  const allTypes = getAllTypes();
+  sel.innerHTML = '<option value="">— Очистить —</option>';
+  Object.entries(allTypes).forEach(([id,t]) => sel.innerHTML += `<option value="${id}">${t.label} — ${t.name}</option>`);
+  renderPatterns();
+}
+function applyTypeToSelected() { if (!selectedDates.length) return; const type = document.getElementById('selType').value; selectedDates.forEach(dk => { if (type) state.shifts[dk]=type; else delete state.shifts[dk]; }); saveState(); selectedDates=[]; rangeStart=null; updateSelectionBar(); render(); }
+function applyPatternToSelected() { if (!selectedDates.length) return; const idx = parseInt(document.getElementById('selPattern').value,10); if (isNaN(idx)||!state.patterns[idx]) return alert('Выберите шаблон'); const p=state.patterns[idx]; const sorted=[...selectedDates].sort((a,b)=>a.localeCompare(b)); if (p.sequence) { sorted.forEach((dk,i)=>{const ch=p.sequence[i%p.sequence.length];if(ch===' '||ch==='_'||ch==='-') delete state.shifts[dk]; else {const allTypes=getAllTypes();let found=null;Object.entries(allTypes).forEach(([id,t])=>{if (t.label===ch) found=id;});if (found) state.shifts[dk]=found; else delete state.shifts[dk];}}); } else { const cl=p.work+p.off; sorted.forEach((dk,i)=>{if (i%cl<p.work) state.shifts[dk]=p.workType; else {if (p.offType) state.shifts[dk]=p.offType; else delete state.shifts[dk];}}); } saveState(); alert(`✅ Применён к ${sorted.length} дням`); selectedDates=[]; rangeStart=null; updateSelectionBar(); render(); }
+function clearSelected() { if (!selectedDates.length) return; selectedDates.forEach(dk=>delete state.shifts[dk]); saveState(); selectedDates=[]; rangeStart=null; updateSelectionBar(); render(); }
+function saveSequencePattern() { const name=document.getElementById('newPatternName').value.trim()||'шаблон'; const seq=document.getElementById('customSequence').value.trim().toUpperCase(); if (!seq) return alert('Введите последовательность'); state.patterns.push({name,sequence:seq}); saveState(); document.getElementById('newPatternName').value=''; document.getElementById('customSequence').value=''; render(); alert(`✅ Шаблон "${name}" [${seq}] сохранён`); }
+function saveNumericPattern() { const name=document.getElementById('newPatternName').value.trim(); if (!name) return alert('Введите название'); const work=parseInt(document.getElementById('patternWork').value)||3; const off=parseInt(document.getElementById('patternOff').value)||3; if (work<1||off<1) return alert('Дни ≥ 1'); const workType=document.getElementById('patternWorkType').value; const offType=document.getElementById('patternOffType').value||null; if (!workType) return alert('Выберите тип для работы'); state.patterns.push({name,work,off,workType,offType}); saveState(); document.getElementById('newPatternName').value=''; render(); alert(`✅ Шаблон "${name}" (${work}/${off}) сохранён`); }
+function applyPatternById(i) { if (!state.patterns[i]) return; if (!selectionMode) toggleSelectionMode(); document.getElementById('selPattern').value=i; applyPatternToSelected(); }
+function removePattern(i) { if (!confirm(`Удалить?`)) return; state.patterns.splice(i,1); saveState(); render(); }
+function updateCyclePreview() { const allTypes=getAllTypes(); const wt=allTypes[document.getElementById('patternWorkType').value]||{label:'Р',color:'#888'}; const w=parseInt(document.getElementById('patternWork').value)||3; const o=parseInt(document.getElementById('patternOff').value)||3; let html='<span style="font-size:9px;color:#aaa;">Цикл:</span> '; for (let i=0;i<w;i++) html+=`<span class="cycle-step" style="background:${wt.color};color:${wt.textColor||'#fff'}">${wt.label}</span>`; for (let i=0;i<o;i++) html+=`<span class="cycle-step" style="background:#2a2a35;color:#666;">◇</span>`; document.getElementById('patternPreview').innerHTML=html; }
+document.addEventListener('change',(e)=>{if(['patternWork','patternOff','patternWorkType','patternOffType'].includes(e.target.id)) updateCyclePreview();});
+document.addEventListener('input',(e)=>{if(['patternWork','patternOff'].includes(e.target.id)) updateCyclePreview();});
+function updateCycleForm() { const allTypes=getAllTypes(); const sw=document.getElementById('patternWorkType'); sw.innerHTML=''; Object.entries(allTypes).forEach(([id,t])=>{const o=document.createElement('option');o.value=id;o.textContent=`${t.label} — ${t.name}`;if (id==='day') o.selected=true;sw.appendChild(o);}); updateCyclePreview(); }
+function changeMonth(delta) { baseMonth+=delta; if (baseMonth<0){baseMonth=11;baseYear--;} if (baseMonth>11){baseMonth=0;baseYear++;} render(); }
+function goToday() { const n=new Date(); baseYear=n.getFullYear(); baseMonth=n.getMonth(); render(); }
+function addCustomType() {
+  const name = document.getElementById('newTypeName').value.trim();
+  const label = document.getElementById('newTypeLabel').value.trim().toUpperCase() || '?';
+  const color = document.getElementById('newTypeColor').value;
+  const overtime = document.getElementById('newTypeOvertime').checked;
+  if (!name) return alert('Введите название');
+  const id = `c_${nextCustomId++}`;
+  state.customTypes[id] = { id, name, label, color, textColor: isLightColor(color) ? '#1a1a2e' : '#fff', paid: true, isOvertime: overtime, salary: state.salary.other || state.salary.day, bonus: state.bonuses.other || 0 };
+  saveState();
+  document.getElementById('newTypeName').value = '';
+  document.getElementById('newTypeLabel').value = '';
+  document.getElementById('newTypeOvertime').checked = false;
+  render();
+}
+function removeCustomType(id) { if (!confirm(`Удалить "${state.customTypes[id]?.name}"?`)) return; Object.keys(state.shifts).forEach(k=>{if (state.shifts[k]===id) delete state.shifts[k];}); delete state.customTypes[id]; saveState(); render(); }
+function openModal(date) { modalContext={date}; document.getElementById('modalTitle').textContent=`${date}`; document.getElementById('modalDate').value=date; const st=document.getElementById('modalType'); const allTypes=getAllTypes(); st.innerHTML='<option value="">— Пусто (выходной) —</option>'; Object.entries(allTypes).forEach(([id,t])=>st.innerHTML+=`<option value="${id}">${t.label} — ${t.name}</option>`); st.value=state.shifts[date]||''; document.getElementById('modalOverlay').classList.add('active'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+function saveModal() { const date=document.getElementById('modalDate').value; const type=document.getElementById('modalType').value; delete state.shifts[modalContext.date]; if (type) state.shifts[date]=type; saveState(); closeModal(); render(); }
+function captureTemplate() { const name=document.getElementById('newTplName').value.trim(); if (!name) return alert('Введите название'); const mdata=getMonthsData(); const slice={}; mdata.forEach(({y,m})=>{for (let d=1;d<=daysInMonth(y,m);d++){const k=dateStr(y,m,d);if (state.shifts[k]) slice[k]=state.shifts[k];}}); if (!Object.keys(slice).length) return alert('Нет смен'); state.templates.push({name,shifts:JSON.parse(JSON.stringify(slice))}); saveState(); document.getElementById('newTplName').value=''; render(); alert(`✅ "${name}" сохранён`); }
+function applyTemplateById(i) { const tpl=state.templates[i]; if (!tpl||!confirm(`Применить "${tpl.name}"?`)) return; const mdata=getMonthsData(); Object.entries(tpl.shifts).forEach(([key,val])=>{const d=parseInt(key.split('-')[2],10);mdata.forEach(({y,m})=>{if (d>=1&&d<=daysInMonth(y,m)) state.shifts[dateStr(y,m,d)]=val;});}); saveState(); render(); }
+function removeTemplate(i) { if (!confirm(`Удалить?`)) return; state.templates.splice(i,1); saveState(); render(); }
+function openPrintModal(){updatePrintModal();document.getElementById('printModal').classList.add('open');}
+function closePrintModal(){document.getElementById('printModal').classList.remove('open');}
+function updatePrintModal(){const sel=document.getElementById('printStartMonth');const mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];sel.innerHTML='';for(let y=baseYear-1;y<=baseYear+1;y++)for(let m=0;m<12;m++){const o=document.createElement('option');o.value=`${y}-${m}`;o.textContent=`${mn[m]} ${y}`;if(y===baseYear&&m===baseMonth)o.selected=true;sel.appendChild(o);}}
+function doPrint() {
+  const title = document.getElementById('printTitle').value || 'График';
+  const [sy, sm] = document.getElementById('printStartMonth').value.split('-').map(Number);
+  const count = parseInt(document.getElementById('printCount').value) || 4;
+  closePrintModal();
+  const allTypes = getAllTypes();
+  const mn = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const perPage = count <= 2 ? 2 : (count <= 4 ? 2 : 6);
+  const cols = count <= 2 ? 2 : (count <= 4 ? 2 : 3);
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>
+@page { size: A4 landscape; margin: 0.4cm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 4px; color: #000; font-size: 7px; }
+.h { text-align: center; margin-bottom: 4px; }
+.h h1 { font-size: 14px; }
+.page { page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+.ps { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; padding: 4px; border: 1.5px solid #000; }
+.ps > div { text-align: center; min-width: 50px; }
+.ps .pv { font-size: 11px; font-weight: 700; }
+.ps .pl { font-size: 6px; color: #555; }
+.mg { display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 4px; }
+.mc { border: 1px solid #000; border-radius: 2px; padding: 2px; }
+.ml { font-size: 8px; font-weight: 700; text-align: center; margin-bottom: 1px; }
+.cg { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; }
+.dh { text-align: center; font-size: 5px; padding: 1px 0; border: 0.5px solid #000; font-weight: 600; }
+.dc { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0.5px solid #000; min-height: 16px; font-size: 6px; background: #fff; }
+.sb { font-size: 5px; font-weight: 700; padding: 0 2px; border: 0.5px solid #000; }
+.ed { background: #f0f0f0; }
+.ms { display: flex; gap: 1px; flex-wrap: wrap; margin-top: 1px; padding-top: 1px; border-top: 1px solid #000; }
+.ms span { font-size: 5px; padding: 0 2px; border: 0.5px solid #000; }
+.pb { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 1px; padding: 2px; border: 1px solid #000; }
+.pp { display: flex; align-items: center; gap: 2px; padding: 1px 4px; border: 0.5px solid #000; font-weight: 700; }
+.pp .pa { font-size: 8px; }
+.pp .pl { font-size: 5px; color: #555; }
+</style></head><body>
+<div class="h"><h1>${title}</h1></div>`;
+  const totalPages = Math.ceil(count / perPage);
+  for (let page = 0; page < totalPages; page++) {
+    const si = page * perPage, ei = Math.min(si + perPage, count);
+    let p5t = 0, p20t = 0, bont = 0;
+    for (let i = si; i < ei; i++) {
+      const m = (sm + i) % 12, y = sy + Math.floor((sm + i) / 12);
+      const pm = m === 0 ? 11 : m - 1, pyy = m === 0 ? y - 1 : y;
+      const dp = daysInMonth(pyy, pm);
+      let p5 = 0;
+      for (let d = 16; d <= dp; d++) { const v = state.shifts[dateStr(pyy, pm, d)]; if (v && !isOvertimeType(v)) p5 += getSalaryForType(v); }
+      for (let d = 1; d <= dp; d++) { const v = state.shifts[dateStr(pyy, pm, d)]; if (v && isOvertimeType(v)) p5 += getSalaryForType(v); }
+      let p20 = 0; const dc = daysInMonth(y, m);
+      for (let d = 1; d <= 15 && d <= dc; d++) { const v = state.shifts[dateStr(y, m, d)]; if (v && !isOvertimeType(v)) p20 += getSalaryForType(v); }
+      let bo = 0;
+      for (let d = 1; d <= dp; d++) { const v = state.shifts[dateStr(pyy, pm, d)]; if (v && isTypePaid(v)) bo += getBonusForType(v); }
+      p5t += p5; p20t += p20; bont += bo;
+    }
+    const totalt = p5t + p20t + bont;
+    html += `<div class="page"><div class="ps"><div><div class="pv">${p5t.toLocaleString('ru-RU')}₽</div><div class="pl">📊5</div></div><div><div class="pv">${p20t.toLocaleString('ru-RU')}₽</div><div class="pl">📊20</div></div><div><div class="pv">${bont.toLocaleString('ru-RU')}₽</div><div class="pl">🎯24</div></div><div><div class="pv">${totalt.toLocaleString('ru-RU')}₽</div><div class="pl">💰Всего</div></div></div>
+    <div class="mg">`;
+    for (let i = si; i < ei; i++) {
+      const m = (sm + i) % 12, y = sy + Math.floor((sm + i) / 12), days = daysInMonth(y, m);
+      const pm = m === 0 ? 11 : m - 1, pyy = m === 0 ? y - 1 : y;
+      const dp = daysInMonth(pyy, pm);
+      let p5 = 0; for (let d = 16; d <= dp; d++) { const v = state.shifts[dateStr(pyy, pm, d)]; if (v && !isOvertimeType(v)) p5 += getSalaryForType(v); } for (let d = 1; d <= dp; d++) { const v = state.shifts[dateStr(pyy, pm, d)]; if (v && isOvertimeType(v)) p5 += getSalaryForType(v); }
+      let p20 = 0; const dc = daysInMonth(y, m); for (let d = 1; d <= 15 && d <= dc; d++) { const v = state.shifts[dateStr(y, m, d)]; if (v && !isOvertimeType(v)) p20 += getSalaryForType(v); }
+      let bo = 0; for (let d = 1; d <= dp; d++) { const v = state.shifts[dateStr(pyy, pm, d)]; if (v && isTypePaid(v)) bo += getBonusForType(v); }
+      const tot = p5 + p20 + bo;
+      html += `<div class="mc"><div class="ml">${mn[m]} ${y}</div><div class="cg">${'Пн Вт Ср Чт Пт Сб Вс'.split(' ').map(d =>` <div class="dh">${d}</div>`).join('')}`;
+      const fd = new Date(y, m, 1).getDay(); const so = fd === 0 ? 6 : fd - 1;
+      for (let j = 0; j < so; j++) html += `<div class="dc ed">&nbsp;</div>`;
+      const cn = {}; Object.keys(allTypes).forEach(id => cn[id] = 0); let tf = 0;
+      for (let d = 1; d <= days; d++) { const va = state.shifts[dateStr(y, m, d)] || '', td = allTypes[va]; let b = ''; if (td) { b = `<div class="sb">${td.label}</div>`; cn[va]++; tf++; } html += `<div class="dc"><div>${d}</div>${b}</div>`; }
+      const rm = (so + days) % 7; if (rm > 0) for (let j = 0; j < 7 - rm; j++) html += `<div class="dc ed">&nbsp;</div>`;
+      html += `</div><div class="ms"><span>📅${days}</span><span>${tf}р</span>`; const em2 = days - tf; if (em2 > 0) html += `<span>◇${em2}</span>`; Object.entries(allTypes).forEach(([id, t]) => { if (cn[id] > 0) html += `<span>${t.name}:${cn[id]}</span>`; }); html += `</div>`;
+      html += `<div class="pb">`;
+      if (p5 > 0) html += `<div class="pp"><div class="pa">${p5.toLocaleString('ru-RU')}₽</div><div class="pl">📊5</div></div>`;
+      if (p20 > 0) html += `<div class="pp"><div class="pa">${p20.toLocaleString('ru-RU')}₽</div><div class="pl">📊20</div></div>`;
+      if (bo > 0) html += `<div class="pp"><div class="pa">${bo.toLocaleString('ru-RU')}₽</div><div class="pl">🎯24</div></div>`;
+      if (tot > 0) html += `<div class="pp"><div class="pa">${tot.toLocaleString('ru-RU')}₽</div><div class="pl">💰итог</div></div>`;
+      html += `</div></div>`;
+    }
+    html += `</div></div>`;
+  }
+  html += `</body></html>`;
+  const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500);
+}
+function clearAllData() { if (!confirm('Очистить всё?')) return; if (!confirm('Точно?')) return; state = { shifts: {}, customTypes: {}, templates: [], patterns: [], monthCount: 2, salary: { day: 2000, night: 2500, overtime: 2000, other: 2000 }, bonuses: { ...DEFAULT_BONUSES } }; nextCustomId = 1; saveState(); render(); }
+function exportData() { saveSalarySettings(); const b = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `schedule_${baseYear}-${String(baseMonth+1).padStart(2,'0')}.json`; a.click(); URL.revokeObjectURL(u); }
+function importData(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if (!d.shifts) throw Error('Invalid'); if (!confirm(`Импортировать данные?`)) return; state.shifts = d.shifts; state.customTypes = d.customTypes || {}; state.templates = d.templates || []; state.patterns = d.patterns || []; if (d.monthCount) state.monthCount = d.monthCount; if (d.salary) state.salary = { ...state.salary, ...d.salary }; if (d.bonuses) state.bonuses = { ...DEFAULT_BONUSES, ...d.bonuses }; saveState(); render(); } catch(err) { alert('Error: ' + err.message); } }; r.readAsText(f); e.target.value = ''; }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('PWA service worker:', err));
+  });
+}
+
+render();
+</script>
+</body>
+</html>
