@@ -175,16 +175,6 @@
   .pay-20  .pay-amount   { color: #f77f00; }
   .pay-24  .pay-amount   { color: #a855f7; }
   .pay-total .pay-amount { color: #2ec4b6; }
-  .payments-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #aaa;
-    width: 100%;
-  }
-  .payments-empty {
-    font-size: 9px;
-    color: #555;
-  }
   .pay-total {
     background: rgba(46, 196, 182, 0.08);
     border-left: 1px solid #1e1e28;
@@ -360,8 +350,7 @@
     .app {
       width: 100%;
       max-width: none;
-      /* Extra top space keeps the header/buttons below the iPhone Dynamic Island / notch. */
-      padding: max(10px, calc(env(safe-area-inset-top) + 6px)) 14px calc(env(safe-area-inset-bottom) + 18px);
+      padding: calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 18px);
     }
 
     .header {
@@ -370,8 +359,6 @@
       gap: 8px;
       padding: 0 2px 10px;
       align-items: center;
-      position: relative;
-      z-index: 2;
     }
 
     .header-left {
@@ -518,50 +505,6 @@
 
     .pay-item .pay-label {
       font-size: 10px;
-    }
-
-
-    /* Monthly payment summary */
-    .payments-block {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 14px;
-    }
-
-    .payments-title {
-      grid-column: 1 / -1;
-      font-size: 14px;
-      font-weight: 600;
-      color: #ddd;
-      padding: 0 2px 2px;
-    }
-
-    .pay-item {
-      min-width: 0;
-      width: 100%;
-      min-height: 62px;
-      padding: 8px 10px;
-      border-radius: 11px;
-      gap: 8px;
-    }
-
-    .pay-item .pay-icon { font-size: 16px; }
-    .pay-item .pay-amount { font-size: 16px; white-space: nowrap; }
-    .pay-item .pay-label { font-size: 10px; }
-
-    .pay-total {
-      border-left: 0;
-      padding-left: 10px;
-    }
-
-    .payments-empty {
-      grid-column: 1 / -1;
-      font-size: 11px;
-      color: #555;
-      padding: 4px 2px;
     }
 
     .legend-bar {
@@ -929,7 +872,7 @@ function renderPaymentsBlock(y, m, idx) {
     if (val && isTypePaid(val)) totalBonus += getBonusForType(val);
   }
   const pay24Date = getPayDate(y, m, 24);
-  let html = '<div class="payments-title">Выплата в месяце</div>';
+  let html = '';
   if (pay5 > 0) html += `<div class="pay-item pay-5"><span class="pay-icon">📊</span><div><div class="pay-amount">${fmt(pay5)}₽</div><div class="pay-label">5-е(${pay5Date.d} ${ms[pay5Date.m]})</div></div></div>`;
   if (pay20 > 0) html += `<div class="pay-item pay-20"><span class="pay-icon">📊</span><div><div class="pay-amount">${fmt(pay20)}₽</div><div class="pay-label">20-е(${pay20Date.d} ${ms[pay20Date.m]})</div></div></div>`;
   if (totalBonus > 0) html += `<div class="pay-item pay-24"><span class="pay-icon">🎯</span><div><div class="pay-amount">${fmt(totalBonus)}₽</div><div class="pay-label">24-е(${pay24Date.d} ${ms[pay24Date.m]})</div></div></div>`;
@@ -937,7 +880,7 @@ function renderPaymentsBlock(y, m, idx) {
     const total = pay5 + pay20 + totalBonus;
     html += `<div class="pay-item pay-total"><span class="pay-icon">💰</span><div><div class="pay-amount">${fmt(total)}₽</div><div class="pay-label">всего</div></div></div>`;
   }
-  document.getElementById(`paymentsBlock${idx}`).innerHTML = (pay5 > 0 || pay20 > 0 || totalBonus > 0) ? html : '<div class="payments-title">Выплата в месяце</div><div class="payments-empty">Нет выплат</div>';
+  document.getElementById(`paymentsBlock${idx}`).innerHTML = html || '<span style="font-size:9px;color:#555;">Нет выплат</span>';
 }
 function renderCustomTypes() {
   const c = document.getElementById('customTypeList');
