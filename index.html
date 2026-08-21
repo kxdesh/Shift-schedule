@@ -332,6 +332,202 @@
   .print-modal-actions button { flex: 1; padding: 8px; border: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .print-modal-actions .print-btn { background: #4361ee; color: #fff; }
   .print-modal-actions .cancel-btn { background: #2a2a35; color: #aaa; }
+
+  /* ===== iPhone / PWA mobile layout ===== */
+  @media (max-width: 600px) {
+    html, body {
+      width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      padding: 0;
+      background: #0f0f12;
+    }
+
+    .app {
+      width: 100%;
+      max-width: none;
+      padding: calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 18px);
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 0 2px 10px;
+      align-items: center;
+    }
+
+    .header-left {
+      min-width: 0;
+      gap: 8px;
+    }
+
+    .header-left h1 {
+      font-size: 27px;
+      white-space: nowrap;
+    }
+
+    .header-left .month-count-select,
+    .header-right .month-count-select {
+      font-size: 15px;
+      padding: 7px 10px;
+      min-height: 40px;
+      border-radius: 12px;
+    }
+
+    .header-right {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      width: 100%;
+    }
+
+    .header-right button {
+      width: 100%;
+      min-height: 44px;
+      padding: 7px 5px;
+      border-radius: 12px;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .header-right .month-count-select {
+      width: auto;
+    }
+
+    .months-grid {
+      display: block !important;
+      width: 100%;
+    }
+
+    .month-card {
+      width: 100%;
+      padding: 12px 8px 10px;
+      border-radius: 16px;
+      background: #13131a;
+      overflow: hidden;
+    }
+
+    .month-card + .month-card {
+      margin-top: 12px;
+    }
+
+    .month-header {
+      margin-bottom: 8px;
+      padding: 0 2px;
+    }
+
+    .month-header .month-name {
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .month-nav-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #1a1a24;
+      font-size: 20px;
+      padding: 0;
+    }
+
+    .calendar-grid {
+      gap: 3px;
+    }
+
+    .day-header {
+      font-size: 14px;
+      padding: 5px 0 7px;
+      color: #666;
+    }
+
+    .day-cell {
+      aspect-ratio: auto;
+      height: 72px;
+      min-height: 72px;
+      border-radius: 11px;
+      border-width: 2px;
+      gap: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-cell:active {
+      transform: scale(.98);
+    }
+
+    .day-cell .day-number {
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .shift-badge {
+      font-size: 10px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      max-width: 88%;
+      line-height: 1.1;
+    }
+
+    .month-stats {
+      margin-top: 9px;
+      padding-top: 8px;
+      gap: 5px;
+    }
+
+    .month-stat {
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 8px;
+    }
+
+    .payments-block {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 12px;
+      gap: 7px;
+    }
+
+    .pay-item {
+      flex: 1 1 120px;
+      min-height: 48px;
+      padding: 7px 9px;
+      border-radius: 10px;
+    }
+
+    .pay-item .pay-amount {
+      font-size: 15px;
+    }
+
+    .pay-item .pay-label {
+      font-size: 10px;
+    }
+
+    .legend-bar {
+      gap: 8px 12px;
+      padding: 10px 2px 4px;
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      font-size: 11px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* Make the app content feel like the generated mobile mockup. */
+    #monthsGrid {
+      min-height: 0;
+    }
+  }
+
   @media print {
     body { background: #fff !important; color: #000 !important; font-size: 8px; }
     .app { max-width: 100%; padding: 3px; }
