@@ -360,7 +360,8 @@
     .app {
       width: 100%;
       max-width: none;
-      padding: calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 18px);
+      /* Extra top space keeps the header/buttons below the iPhone Dynamic Island / notch. */
+      padding: max(10px, calc(env(safe-area-inset-top) + 6px)) 14px calc(env(safe-area-inset-bottom) + 18px);
     }
 
     .header {
