@@ -1116,4 +1116,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; p
   const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500);
 }
 function clearAllData() { if (!confirm('Очистить всё?')) return; if (!confirm('Точно?')) return; state = { shifts: {}, customTypes: {}, templates: [], patterns: [], monthCount: 2, salary: { day: 2000, night: 2500, overtime: 2000, other: 2000 }, bonuses: { ...DEFAULT_BONUSES } }; nextCustomId = 1; saveState(); render(); }
-function exportData() { s
+function exportData() { saveSalarySettings(); const b = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `schedule_${baseYear}-${String(baseMonth+1).padStart(2,'0')}.json`; a.click(); URL.revokeObjectURL(u); }
+function importData(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if (!d.shifts) throw Error('Invalid'); if (!confirm(`Импортировать данные?`)) return; state.shifts = d.shifts; state.customTypes = d.customTypes || {}; state.templates = d.templates || []; state.patterns = d.patterns || []; if (d.monthCount) state.monthCount = d.monthCount; if (d.salary) state.salary = { ...state.salary, ...d.salary }; if (d.bonuses) state.bonuses = { ...DEFAULT_BONUSES, ...d.bonuses }; saveState(); render(); } catch(err) { alert('Error: ' + err.message); } }; r.readAsText(f); e.target.value = ''; }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('PWA service worker:', err));
+  });
+}
+
+render();
+</script>
+</body>
+</html>
